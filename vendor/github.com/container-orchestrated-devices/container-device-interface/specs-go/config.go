@@ -3,7 +3,7 @@ package specs
 import "os"
 
 // CurrentVersion is the current version of the Spec.
-const CurrentVersion = "0.3.0"
+const CurrentVersion = "0.4.0"
 
 // Spec is the base configuration for CDI
 type Spec struct {
@@ -16,8 +16,9 @@ type Spec struct {
 
 // Device is a "Device" a container runtime can add to a container
 type Device struct {
-	Name           string         `json:"name"`
-	ContainerEdits ContainerEdits `json:"containerEdits"`
+	Name           string            `json:"name"`
+	Annotations    map[string]string `json:"annotations"`
+	ContainerEdits ContainerEdits    `json:"containerEdits"`
 }
 
 // ContainerEdits are edits a container runtime must make to the OCI spec to expose the device.
@@ -45,6 +46,7 @@ type Mount struct {
 	HostPath      string   `json:"hostPath"`
 	ContainerPath string   `json:"containerPath"`
 	Options       []string `json:"options,omitempty"`
+	Type          string   `json:"type,omitempty"`
 }
 
 // Hook represents a hook that needs to be added to the OCI spec.

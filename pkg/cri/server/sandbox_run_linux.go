@@ -226,6 +226,11 @@ func (c *criService) sandboxContainerSpecOpts(config *runtime.PodSandboxConfig, 
 	if userstr != "" {
 		specOpts = append(specOpts, oci.WithUser(userstr))
 	}
+
+	if c.config.EnableCDI {
+		specOpts = append(specOpts, oci.WithCDI(config.Annotations, c.config.CDISpecDirs))
+	}
+
 	return specOpts, nil
 }
 
