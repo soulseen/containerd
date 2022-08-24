@@ -1440,11 +1440,11 @@ func TestContainerExtensions(t *testing.T) {
 		if len(cExts) != 1 {
 			t.Errorf("expected 1 container extension")
 		}
-		if cExts["hello"].TypeUrl != ext.TypeUrl {
-			t.Errorf("got unexpected type url for extension: %s", cExts["hello"].TypeUrl)
+		if actual := cExts["hello"].GetTypeUrl(); actual != ext.TypeUrl {
+			t.Errorf("got unexpected type url for extension: %s", actual)
 		}
-		if !bytes.Equal(cExts["hello"].Value, ext.Value) {
-			t.Errorf("expected extension value %q, got: %q", ext.Value, cExts["hello"].Value)
+		if actual := cExts["hello"].GetValue(); !bytes.Equal(actual, ext.Value) {
+			t.Errorf("expected extension value %q, got: %q", ext.Value, actual)
 		}
 	}
 
@@ -2036,7 +2036,12 @@ func TestDaemonRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer task.Delete(ctx)
+
+	defer func() {
+		if _, err := task.Delete(ctx, WithProcessKill); err != nil {
+			t.Logf("failed to delete task: %v", err)
+		}
+	}()
 
 	statusC, err := task.Wait(ctx)
 	if err != nil {
@@ -2058,7 +2063,10 @@ func TestDaemonRestart(t *testing.T) {
 		t.Errorf(`first task.Wait() should have failed with "transport is closing"`)
 	}
 
-	waitCtx, waitCancel := context.WithTimeout(ctx, 2*time.Second)
+	// NOTE(gabriel-samfira): Windows needs a bit more time to restart.
+	// Increase timeout from 2 seconds to 10 seconds to avoid deadline
+	// exceeded errors.
+	waitCtx, waitCancel := context.WithTimeout(ctx, 10*time.Second)
 	serving, err := client.IsServing(waitCtx)
 	waitCancel()
 	if !serving {

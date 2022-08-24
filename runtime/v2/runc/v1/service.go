@@ -41,6 +41,7 @@ import (
 	"github.com/containerd/containerd/pkg/process"
 	"github.com/containerd/containerd/pkg/schedcore"
 	"github.com/containerd/containerd/pkg/stdio"
+	"github.com/containerd/containerd/protobuf"
 	"github.com/containerd/containerd/runtime/v2/runc"
 	"github.com/containerd/containerd/runtime/v2/runc/options"
 	"github.com/containerd/containerd/runtime/v2/shim"
@@ -207,9 +208,7 @@ func (s *service) StartShim(ctx context.Context, opts shim.StartOpts) (_ string,
 					if err != nil {
 						return "", fmt.Errorf("failed to load cgroup %s: %w", opts.ShimCgroup, err)
 					}
-					if err := cg.Add(cgroups.Process{
-						Pid: cmd.Process.Pid,
-					}); err != nil {
+					if err := cg.AddProc(uint64(cmd.Process.Pid)); err != nil {
 						return "", fmt.Errorf("failed to join cgroup %s: %w", opts.ShimCgroup, err)
 					}
 				}
@@ -250,7 +249,7 @@ func (s *service) Cleanup(ctx context.Context) (*taskAPI.DeleteResponse, error) 
 		root = opts.Root
 	}
 
-	r := process.NewRunc(root, path, ns, runtime, "", false)
+	r := process.NewRunc(root, path, ns, runtime, false)
 	if err := r.Delete(ctx, s.id, &runcC.DeleteOpts{
 		Force: true,
 	}); err != nil {
@@ -417,18 +416,18 @@ func (s *service) State(ctx context.Context, r *taskAPI.StateRequest) (*taskAPI.
 	if err != nil {
 		return nil, err
 	}
-	status := task.StatusUnknown
+	status := task.Status_UNKNOWN
 	switch st {
 	case "created":
-		status = task.StatusCreated
+		status = task.Status_CREATED
 	case "running":
-		status = task.StatusRunning
+		status = task.Status_RUNNING
 	case "stopped":
-		status = task.StatusStopped
+		status = task.Status_STOPPED
 	case "paused":
-		status = task.StatusPaused
+		status = task.Status_PAUSED
 	case "pausing":
-		status = task.StatusPausing
+		status = task.Status_PAUSING
 	}
 	sio := p.Stdio()
 	return &taskAPI.StateResponse{
@@ -507,7 +506,7 @@ func (s *service) Pids(ctx context.Context, r *taskAPI.PidsRequest) (*taskAPI.Pi
 				d := &options.ProcessDetails{
 					ExecID: p.ID(),
 				}
-				a, err := typeurl.MarshalAny(d)
+				a, err := protobuf.MarshalAnyToProto(d)
 				if err != nil {
 					return nil, fmt.Errorf("failed to marshal process %d info: %w", pid, err)
 				}
@@ -617,7 +616,7 @@ func (s *service) Stats(ctx context.Context, r *taskAPI.StatsRequest) (*taskAPI.
 		return nil, err
 	}
 	return &taskAPI.StatsResponse{
-		Stats: data,
+		Stats: protobuf.FromAny(data),
 	}, nil
 }
 

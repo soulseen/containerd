@@ -17,6 +17,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,7 +31,6 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/typeurl"
-	"golang.org/x/net/context"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	cio "github.com/containerd/containerd/pkg/cri/io"
@@ -166,7 +166,7 @@ func (c *criService) loadContainer(ctx context.Context, cntr containerd.Containe
 	if !ok {
 		return container, fmt.Errorf("metadata extension %q not found", containerMetadataExtension)
 	}
-	data, err := typeurl.UnmarshalAny(&ext)
+	data, err := typeurl.UnmarshalAny(ext)
 	if err != nil {
 		return container, fmt.Errorf("failed to unmarshal metadata extension %q: %w", ext, err)
 	}
@@ -335,7 +335,7 @@ func (c *criService) loadSandbox(ctx context.Context, cntr containerd.Container)
 	if !ok {
 		return sandbox, fmt.Errorf("metadata extension %q not found", sandboxMetadataExtension)
 	}
-	data, err := typeurl.UnmarshalAny(&ext)
+	data, err := typeurl.UnmarshalAny(ext)
 	if err != nil {
 		return sandbox, fmt.Errorf("failed to unmarshal metadata extension %q: %w", ext, err)
 	}
