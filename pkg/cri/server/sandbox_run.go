@@ -60,7 +60,8 @@ func init() {
 // the sandbox is in ready state.
 func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandboxRequest) (_ *runtime.RunPodSandboxResponse, retErr error) {
 	config := r.GetConfig()
-	log.G(ctx).Infof("Sandbox config %+v", r)
+	j, _ := json.Marshal(r)
+	log.G(ctx).Infof("Sandbox config %s", j)
 
 	// Generate unique id and name for the sandbox and reserve the name.
 	id := util.GenerateID()
